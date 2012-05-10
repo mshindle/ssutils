@@ -1,0 +1,12 @@
+ssutils 
+version:
+
+A set of server side utilities that perform simple, stateless tasks.
+
+To install....
+
+./configure --prefix=/fs/tools
+make
+make install
+
+ 
