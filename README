@@ -1,12 +1,29 @@
-ssutils 
-version:
+ssutils
+version: 0.5.0
 
 A set of server side utilities that perform simple, stateless tasks.
 
-To install....
+Programs built: yph, capture, cgictest
+(uses bundled third-party libraries cgic and md5 from external/)
 
-./configure --prefix=/fs/tools
-make
-make install
+Requirements
+------------
+- A C compiler
+- CMake 3.16 or newer
 
- 
+To build and install
+--------------------
+
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/fs/tools
+cmake --build build
+cmake --install build
+
+Executables are installed to <prefix>/cgi-bin and assets (images, cgic.html)
+to <prefix>/share/ssutils.
+
+Configuration options (pass with -D<name>=<value> to the first cmake command)
+-----------------------------------------------------------------------------
+SSU_ASSETS_DIR   Where assets are installed (default: <prefix>/share/ssutils)
+SSU_TMP_DIR      Temporary directory       (default: <prefix>/temp)
+SSU_CACHE_DIR    Cache directory           (default: <prefix>/cache)
+SSU_CGI_DIR      CGI install directory     (default: <prefix>/cgi-bin)

@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
+
 project(ssutils VERSION 0.5.0 LANGUAGES C)
 
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 set(SSU_ASSETS_DIR "${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}"
     CACHE PATH "Directory where assets are installed")
@@ -14,6 +16,7 @@ add_subdirectory(external)
 
 foreach(prog yph capture cgictest)
   add_executable(${prog} src/${prog}.c)
+  target_compile_features(${prog} PUBLIC c_std_11)
   target_link_libraries(${prog} PRIVATE cgic md5)
   target_compile_definitions(${prog} PRIVATE
     ASSETDIR="${SSU_ASSETS_DIR}"

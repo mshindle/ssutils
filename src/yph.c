@@ -1,9 +1,8 @@
 #include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <limits.h>
+#include <unistd.h>
 #include "cgic.h"
 
 // build vars getting a default if not set
@@ -18,13 +17,16 @@
 #endif
 
 // Production Values
+#define CRLF "\r\n"
+#define BUFFER_SIZE 512
+#define CMD_BUFFER (BUFFER_SIZE * 2)
 #define SERVER_NAME     "yph"
 #define TYPE_YPH        0
 #define TYPE_SIG        1
 
 typedef struct {
-	char *baseName;
-	char *bgColor;
+    char *baseName;
+    char *bgColor;
 } yph_type;
 
 typedef struct {
@@ -47,8 +49,8 @@ yph_asset assets[] = {
 
 // base file name
 yph_type types[] = {
-	{"yph", "#a6a8ab"},
-	{"sig", "#ffffff"}
+    {.baseName = "yph", .bgColor = "#a6a8ab"},
+    {.baseName = "sig", .bgColor = "#ffffff"}
 };
 //char *baseName[] = {"yph", "sig"};
 
@@ -78,7 +80,7 @@ find_best_yph(int width, int height, int type) {
     int i, s;
     int best = 0;
     int bscore = INT_MIN;
-    int num = sizeof(assets)/sizeof(yph_asset);
+    int num = sizeof(assets) / sizeof(yph_asset);
 
     i = 0;
     while (i < num) {
@@ -98,7 +100,7 @@ int
 determineTypeRequest() {
     int type;
 
-    cgiFormResultType rt = cgiFormIntegerBounded("type",&type,TYPE_YPH,TYPE_SIG,TYPE_YPH);
+    const cgiFormResultType rt = cgiFormIntegerBounded("type", &type,TYPE_YPH,TYPE_SIG,TYPE_YPH);
     switch (rt) {
         case cgiFormSuccess:
             return type;
@@ -109,52 +111,47 @@ determineTypeRequest() {
 
 int
 cgiMain() {
-    char cacheName[512];
-    char cmd[512];
-    char buf[512];
+    char cacheName[BUFFER_SIZE];
+    char cmd[CMD_BUFFER];
+    char buf[BUFFER_SIZE];
     int width, height;
-    int num;
-    int type;
-    int fsize;
-    FILE *f;
-    int assetIndex;
-	int pid;
-	
-    if (cgiFormInteger("width", &width, 0) == cgiFormSuccess && 
+
+    if (cgiFormInteger("width", &width, 0) == cgiFormSuccess &&
         cgiFormInteger("height", &height, 0) == cgiFormSuccess) {
+        FILE *f;
         // based on the type
-        type = determineTypeRequest();
+        const int type = determineTypeRequest();
 
         // determine the width and height for the asset we need
         if (width < 0) width = 0;
         if (height < 0) height = 0;
         if (width > 1000) width = 1000;
         if (height > 1000) height = 1000;
-        assetIndex = find_best_yph(width, height, type);
+        const int assetIndex = find_best_yph(width, height, type);
 
         // see if we have the file already...
         sprintf(cacheName, "%s/%s_%dx%d.png", CACHEDIR, types[type].baseName, width, height);
         if (!file_exist(cacheName)) {
-        	int pid = getpid();
-            sprintf(cmd, 
+            const __pid_t pid = getpid();
+            sprintf(cmd,
                     "convert xc:%s -resize %dx%d! -gravity center %s/%s -compose over -composite %s/yph.%d.png",
                     types[type].bgColor, width, height, ASSETDIR, assets[assetIndex].fname,
                     TMPDIR, pid);
             system(cmd);
-            sprintf(cmd, "mv -f %s/yph.%d.png %s", TMPDIR,pid,cacheName);
+            sprintf(cmd, "mv -f %s/yph.%d.png %s", TMPDIR, pid, cacheName);
             system(cmd);
         }
 
         // send whatever we have out...
         if ((f = fopen(cacheName, "r"))) {
             fseek(f, 0, SEEK_END);
-            fsize = ftell(f);
+            const long int fsize = ftell(f);
             fseek(f, 0, SEEK_SET);
             // print out our header
-            fprintf(cgiOut, "Content-length: %d\r\nContent-type: image/png\r\n\r\n", fsize);
+            fprintf(cgiOut, "Content-length: %ld" CRLF "Content-type: image/png" CRLF CRLF, fsize);
             // print out our file
             while (!feof(f)) {
-                num = fread(buf, 1, 512, f);
+                const size_t num = fread(buf, 1, 512, f);
                 fwrite(buf, 1, num, stdout);
             }
             fclose(f);
@@ -162,6 +159,3 @@ cgiMain() {
     }
     return 0;
 }
-
-
-
