@@ -6,6 +6,11 @@
 #ifndef CGI_C
 #define CGI_C 1
 
+/* Ensure proper linkage to c++ programs. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Bring in standard I/O since some of the functions refer to
 	types defined by it, such as FILE *. */
 
@@ -142,7 +147,7 @@ extern cgiFormResultType cgiFormRadio(
 	int *result, int defaultV);	
 
 /* The paths returned by this function are the original names of files
-	as reported by the uploading web browser and shoult NOT be
+	as reported by the uploading web browser and should NOT be
 	blindly assumed to be "safe" names for server-side use! */
 extern cgiFormResultType cgiFormFileName(
 	char *name, char *result, int max);
@@ -176,10 +181,18 @@ extern cgiFormResultType cgiCookieInteger(
 cgiFormResultType cgiCookies(
 	char ***ptrToStringArray);
 
+typedef enum {
+	cgiCookieSecure         = 1,
+	cgiCookieHttpOnly       = 2,
+	cgiCookieSameSiteStrict = 4
+} cgiCookieOption;
+
 /* path can be null or empty in which case a path of / (entire site) is set. 
 	domain can be a single web site; if it is an entire domain, such as
-	'boutell.com', it should begin with a dot: '.boutell.com' */
-extern void cgiHeaderCookieSetString(char *name, char *value, 
+	'boutell.dev', it should begin with a dot: '.boutell.dev' */
+extern void cgiHeaderCookieSet(char *name, char *value,
+	int secondsToLive, char *path, char *domain, int options);
+extern void cgiHeaderCookieSetString(char *name, char *value,
 	int secondsToLive, char *path, char *domain);
 extern void cgiHeaderCookieSetInteger(char *name, int value,
 	int secondsToLive, char *path, char *domain);
@@ -205,20 +218,20 @@ extern cgiFormResultType cgiFormEntries(
 /* Output string with the <, &, and > characters HTML-escaped. 
 	's' is null-terminated. Returns cgiFormIO in the event
 	of error, cgiFormSuccess otherwise. */
-cgiFormResultType cgiHtmlEscape(char *s);
+cgiFormResultType cgiHtmlEscape(const char *s);
 
 /* Output data with the <, &, and > characters HTML-escaped. 
 	'data' is not null-terminated; 'len' is the number of
 	bytes in 'data'. Returns cgiFormIO in the event
 	of error, cgiFormSuccess otherwise. */
-cgiFormResultType cgiHtmlEscapeData(char *data, int len);
+cgiFormResultType cgiHtmlEscapeData(const char *data, int len);
 
 /* Output string with the " character HTML-escaped, and no
 	other characters escaped. This is useful when outputting
 	the contents of a tag attribute such as 'href' or 'src'.
 	's' is null-terminated. Returns cgiFormIO in the event
 	of error, cgiFormSuccess otherwise. */
-cgiFormResultType cgiValueEscape(char *s);
+cgiFormResultType cgiValueEscape(const char *s);
 
 /* Output data with the " character HTML-escaped, and no
 	other characters escaped. This is useful when outputting
@@ -226,7 +239,11 @@ cgiFormResultType cgiValueEscape(char *s);
 	'data' is not null-terminated; 'len' is the number of
 	bytes in 'data'. Returns cgiFormIO in the event
 	of error, cgiFormSuccess otherwise. */
-cgiFormResultType cgiValueEscapeData(char *data, int len);
+cgiFormResultType cgiValueEscapeData(const char *data, int len);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif /* CGI_C */
 
